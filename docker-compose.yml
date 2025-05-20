@@ -1,0 +1,53 @@
+services:
+  mongodb:
+    image: mongo:5.0
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - app-network
+
+  shopping_microservice:
+    image: registry.dariushuynhuitidvn.id.vn/microservices/shopping_microservice:v1
+    container_name: shopping_microservice
+    ports:
+      - "3003:3003"
+    depends_on:
+      - mongodb
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/shopping_db
+    networks:
+      - app-network
+
+  dashboard_microservice:
+    image: registry.dariushuynhuitidvn.id.vn/microservices/dashboard_microservice:v1
+    container_name: dashboard_microservice
+    ports:
+      - "3002:3002"
+    depends_on:
+      - mongodb
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/dashboard_db
+    networks:
+      - app-network
+
+  user_microservice:
+    image: registry.dariushuynhuitidvn.id.vn/microservices/user_microservice:v1
+    container_name: user_microservice
+    ports:
+      - "3001:3001"
+    depends_on:
+      - mongodb
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/user_db
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongo-data:
