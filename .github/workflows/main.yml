@@ -54,7 +54,6 @@
 #           echo "This will fail now"
 #           exit 1  # Dòng này khiến job thất bại
 
-#Test 3
 name: Deploy to Production
 
 on:
