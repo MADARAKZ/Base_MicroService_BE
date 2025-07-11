@@ -32,7 +32,30 @@
 #         run: |
 #           echo "Deploying..."
 #           sleep 15
-name: Fail Example Workflow
+# TEST 2
+# name: Fail Example Workflow
+
+# on:
+#   push:
+#     branches:
+#       - main
+
+# jobs:
+#   fail-job:
+#     name: Intentional Fail Job
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v3
+
+#       - name: Fail step
+#         run: |
+#           echo "This will fail now"
+#           exit 1  # Dòng này khiến job thất bại
+
+#Test 3
+name: Deploy to Production
 
 on:
   push:
@@ -40,15 +63,19 @@ on:
       - main
 
 jobs:
-  fail-job:
-    name: Intentional Fail Job
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Fail step
+      - name: Print Commit Info
         run: |
-          echo "This will fail now"
-          exit 1  # Dòng này khiến job thất bại
+          echo "Deployed commit: $GITHUB_SHA"
+          echo "Repository: $GITHUB_REPOSITORY"
+
+      - name: Deploy step
+        run: |
+          # Giả sử deploy thành công
+          sleep 10
