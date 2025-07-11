@@ -1,34 +1,54 @@
-name: CI Build Job with 3 Stages
+# name: CI Build Job with 3 Stages
+
+# on:
+#   push:
+
+# jobs:
+#   stage1:
+#     name: 🏗️ Build (30s)
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Simulate Build
+#         run: |
+#           echo "Building..."
+#           sleep 30
+
+#   stage2:
+#     name: 🧪 Test (20s)
+#     runs-on: ubuntu-latest
+#     needs: stage1  # phụ thuộc stage1
+#     steps:
+#       - name: Simulate Test
+#         run: |
+#           echo "Testing..."
+#           sleep 20
+
+#   stage3:
+#     name: 🚀 Deploy (15s)
+#     runs-on: ubuntu-latest
+#     needs: stage2  # phụ thuộc stage2
+#     steps:
+#       - name: Simulate Deploy
+#         run: |
+#           echo "Deploying..."
+#           sleep 15
+name: Fail Example Workflow
 
 on:
   push:
+    branches:
+      - main
 
 jobs:
-  stage1:
-    name: 🏗️ Build (30s)
+  fail-job:
+    name: Intentional Fail Job
     runs-on: ubuntu-latest
-    steps:
-      - name: Simulate Build
-        run: |
-          echo "Building..."
-          sleep 30
 
-  stage2:
-    name: 🧪 Test (20s)
-    runs-on: ubuntu-latest
-    needs: stage1  # phụ thuộc stage1
     steps:
-      - name: Simulate Test
-        run: |
-          echo "Testing..."
-          sleep 20
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-  stage3:
-    name: 🚀 Deploy (15s)
-    runs-on: ubuntu-latest
-    needs: stage2  # phụ thuộc stage2
-    steps:
-      - name: Simulate Deploy
+      - name: Fail step
         run: |
-          echo "Deploying..."
-          sleep 15
+          echo "This will fail now"
+          exit 1  # Dòng này khiến job thất bại
