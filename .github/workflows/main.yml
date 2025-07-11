@@ -1,32 +1,34 @@
-name: DevLake Multi-Stage Build
+name: CI Build Job with 3 Stages
 
 on:
   push:
-    branches: [ main ]
 
 jobs:
-  build:
-    name: CI Build Job with 3 Stages
+  stage1:
+    name: 🏗️ Build (30s)
     runs-on: ubuntu-latest
-
     steps:
-      ### STAGE 1: Setup
-      - name: 🔧 Stage 1 - Checkout and Setup
-        uses: actions/checkout@v3
-
-      - name: Install dependencies
+      - name: Simulate Build
         run: |
-          echo "Installing dependencies..."
-          sleep 5  # simulate setup
+          echo "Building..."
+          sleep 30
 
-      ### STAGE 2: Build
-      - name: 🏗️ Stage 2 - Build Project
+  stage2:
+    name: 🧪 Test (20s)
+    runs-on: ubuntu-latest
+    needs: stage1  # phụ thuộc stage1
+    steps:
+      - name: Simulate Test
         run: |
-          echo "Compiling code..."
-          sleep 7  # simulate build
+          echo "Testing..."
+          sleep 20
 
-      ### STAGE 3: Test
-      - name: 🧪 Stage 3 - Run Unit Tests
+  stage3:
+    name: 🚀 Deploy (15s)
+    runs-on: ubuntu-latest
+    needs: stage2  # phụ thuộc stage2
+    steps:
+      - name: Simulate Deploy
         run: |
-          echo "Running unit tests..."
-          sleep 6  # simulate tests
+          echo "Deploying..."
+          sleep 15
