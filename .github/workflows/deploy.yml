@@ -1,0 +1,21 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  push-image:
+    name: Push image to registry
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Simulate build
+        run: echo "Building app..."
+
+      - name: Simulate push
+        run: echo "Pushing image to Docker registry..."
