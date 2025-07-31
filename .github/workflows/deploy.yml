@@ -9,7 +9,7 @@ jobs:
   push-image:
     name: Push image to registry
     runs-on: ubuntu-latest
-    environment: production
+    environment: PRODUCTION
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
