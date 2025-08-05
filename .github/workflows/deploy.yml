@@ -12,7 +12,7 @@ jobs:
     environment: PRODUCTION
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v3 #test
 
       - name: Simulate build
         run: echo "Building app..."
