@@ -51,8 +51,8 @@ The `blueprint_monitor.py` daemon runs continuously:
 │ • scopes.py       - Repository scope handling  │
 │ • monitoring.py   - Prometheus metrics         │
 └─────────────────────────────────────────────────┘
-           │
-           ▼
+                       │
+                       ▼
 ┌─────────────────────────────────────────────────┐
 │                DevLake API                      │
 │        (Projects, Blueprints, Pipelines)       │
@@ -90,7 +90,6 @@ docker exec devlake-automation ps aux
 ### Entry Points
 - **`manage_projects.py`**: Daily automation daemon (6PM Vietnam time)
 - **`blueprint_monitor.py`**: Continuous monitoring daemon
-- **`run_monitoring.py`**: Standalone monitoring script
 
 ### Core Modules (`modules/`)
 - **`orchestrator.py`**: Main workflow orchestration and plugin processing
@@ -108,14 +107,6 @@ docker exec devlake-automation ps aux
 
 ### Configuration
 - **`config.py`**: Centralized environment variable configuration management
-
-## 🐳 Docker Features
-
-- **Multi-stage Build**: Optimized image size with builder pattern
-- **Non-root User**: Runs with restricted permissions for security
-- **Background Processes**: Both daemons run simultaneously in container
-- **Health Monitoring**: Prometheus metrics endpoint exposed on port 9100
-- **Environment Configuration**: All settings via environment variables
 
 ## 🔄 Supported Platforms
 
@@ -148,56 +139,3 @@ docker exec devlake-automation ps aux
 - **Comprehensive Logging**: Detailed logs for troubleshooting
 - **API Error Handling**: Proper HTTP status code and response validation
 - **Prometheus Metrics**: Failure tracking via metrics instead of noisy alerts
-
-## 📝 Development
-
-### Running Tests
-```bash
-# Install development dependencies
-pip install -r requirements.txt
-
-# Run individual components
-python -m modules.orchestrator  # Test orchestration logic
-python -m utils.logging        # Test logging configuration
-```
-
-### Adding New Plugins
-1. Add plugin support in `modules/scopes.py`
-2. Update repository ID extraction logic
-3. Add plugin-specific configuration in `config.py`
-4. Test with your DevLake instance
-
-## 🔧 Troubleshooting
-
-### Common Issues
-
-**API Connection Errors**
-```bash
-# Check DevLake instance accessibility
-curl http://your-devlake-instance:8080/plugins
-
-# Verify container network connectivity
-docker exec devlake-automation curl http://host.docker.internal:8080/plugins
-```
-
-**Missing Metrics**
-```bash
-# Check Prometheus server
-curl http://localhost:9100/metrics
-
-# Verify monitoring daemon is running
-docker exec devlake-automation ps aux | grep blueprint_monitor
-```
-
-**Permission Errors**
-```bash
-# Check container user permissions
-docker exec devlake-automation id
-
-# Verify file ownership
-docker exec devlake-automation ls -la /app
-```
-
-## 📄 License
-
-This project is part of the DevLake automation suite for enterprise data collection and monitoring.
