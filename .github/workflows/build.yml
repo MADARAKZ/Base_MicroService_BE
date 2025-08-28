@@ -4,14 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       required_scale_set:
-        description: 'Bắt buộc chạy trên scale set này'
+        description: 'Bắt buộc chạy trên scale set này test'
         required: true
         type: string
         default: 'cake-github-runner'
 
 jobs:
   validate-and-run:
-    runs-on: [self-hosted, linux, ${{ github.event.inputs.required_scale_set }}]
+    runs-on: cake-github-runner
     
     steps:
       - name: Validate runner scale set
