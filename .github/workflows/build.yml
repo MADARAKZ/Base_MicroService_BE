@@ -1,26 +1,17 @@
-name: Build and Test
+name: Test Self-hosted Runner
 
 on:
-  workflow_dispatch:  # Cho phép bạn chạy thủ công trên GitHub
+  workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-
+  test:
+    runs-on: [self-hosted, linux]  # Thêm linux để chỉ định OS
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run tests
-        run: npm test
-
-      - name: Show test finished
-        run: echo "✅ Test completed!"
+      - name: Test runner
+        run: |
+          echo "Hello from self-hosted runner"
+          echo "Runner name: ${{ runner.name }}"
+          echo "Runner OS: ${{ runner.os }}"
+          echo "Runner arch: ${{ runner.arch }}"
+          echo "Runner temp: ${{ runner.temp }}"
+          echo "Runner tool cache: ${{ runner.tool_cache }}"
