@@ -1,17 +1,63 @@
-name: Test Self-hosted Runner
+name: Test All Scale Sets
 
 on:
   workflow_dispatch:
+    inputs:
+      scale_set:
+        description: 'Scale set to test'
+        required: true
+        default: 'general'
+        type: choice
+        options:
+        - general
+        - unit-test
+        - terraform
+        - cp
+        - migration-compat
+        - mambu-casc
+        - loan-casc
+        - mobile
+        - feast
 
 jobs:
-  test:
-    runs-on: [self-hosted, linux]  # Thêm linux để chỉ định OS
+  test-runner:
+    runs-on: 
+      - self-hosted
+      - linux
+      - ${{ github.event.inputs.scale_set == 'general' && 'cake-github-runner' || 'cake-github-runner-' + github.event.inputs.scale_set }}
+    
     steps:
-      - name: Test runner
+      - name: Check runner environment
         run: |
-          echo "Hello from self-hosted runner"
+          echo "=== Runner Info ==="
           echo "Runner name: ${{ runner.name }}"
           echo "Runner OS: ${{ runner.os }}"
           echo "Runner arch: ${{ runner.arch }}"
           echo "Runner temp: ${{ runner.temp }}"
           echo "Runner tool cache: ${{ runner.tool_cache }}"
+          
+      - name: Check system resources
+        run: |
+          echo "=== System Resources ==="
+          df -h
+          free -h
+          nproc
+          
+      - name: Check network connectivity
+        run: |
+          echo "=== Network Test ==="
+          ping -c 3 google.com
+          curl -I https://github.com
+          
+      - name: Test basic commands
+        run: |
+          echo "=== Basic Commands ==="
+          git --version
+          docker --version || echo "Docker not available"
+          kubectl version --client || echo "kubectl not available"
+          
+      - name: Success message
+        run: |
+          echo "✅ Runner ${{ github.event.inputs.scale_set }} is working correctly!"
+          echo "Scale set: ${{ github.event.inputs.scale_set }}"
+          echo "Runner: ${{ runner.name }}"
