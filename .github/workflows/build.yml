@@ -1,63 +1,59 @@
-name: Test All Scale Sets
+name: Strict Scale Set Test
 
 on:
   workflow_dispatch:
     inputs:
-      scale_set:
-        description: 'Scale set to test'
+      required_scale_set:
+        description: 'Bắt buộc chạy trên scale set này'
         required: true
-        default: 'general'
-        type: choice
-        options:
-        - general
-        - unit-test
-        - terraform
-        - cp
-        - migration-compat
-        - mambu-casc
-        - loan-casc
-        - mobile
-        - feast
+        type: string
+        default: 'cake-github-runner'
 
 jobs:
-  test-runner:
-    runs-on: 
-      - self-hosted
-      - linux
-      - ${{ github.event.inputs.scale_set == 'general' && 'cake-github-runner' || 'cake-github-runner-' + github.event.inputs.scale_set }}
+  validate-and-run:
+    runs-on: [self-hosted, linux, ${{ github.event.inputs.required_scale_set }}]
     
     steps:
-      - name: Check runner environment
+      - name: Validate runner scale set
+        id: validate
         run: |
-          echo "=== Runner Info ==="
+          REQUIRED_SCALE_SET="${{ github.event.inputs.required_scale_set }}"
+          ACTUAL_RUNNER_NAME="${{ runner.name }}"
+          
+          echo "Required scale set: $REQUIRED_SCALE_SET"
+          echo "Actual runner name: $ACTUAL_RUNNER_NAME"
+          
+          # Kiểm tra runner có đúng scale set không
+          if [[ "$ACTUAL_RUNNER_NAME" == *"$REQUIRED_SCALE_SET"* ]]; then
+            echo "✅ Runner đúng scale set: $REQUIRED_SCALE_SET"
+            echo "scale_set_valid=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Runner SAI scale set!"
+            echo "Expected: $REQUIRED_SCALE_SET"
+            echo "Actual: $ACTUAL_RUNNER_NAME"
+            echo "scale_set_valid=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+      - name: Check runner labels
+        if: steps.validate.outputs.scale_set_valid == 'true'
+        run: |
+          echo "=== Runner Labels ==="
           echo "Runner name: ${{ runner.name }}"
           echo "Runner OS: ${{ runner.os }}"
           echo "Runner arch: ${{ runner.arch }}"
-          echo "Runner temp: ${{ runner.temp }}"
-          echo "Runner tool cache: ${{ runner.tool_cache }}"
           
-      - name: Check system resources
+      - name: Run actual job
+        if: steps.validate.outputs.scale_set_valid == 'true'
         run: |
-          echo "=== System Resources ==="
-          df -h
-          free -h
-          nproc
-          
-      - name: Check network connectivity
-        run: |
-          echo "=== Network Test ==="
-          ping -c 3 google.com
-          curl -I https://github.com
-          
-      - name: Test basic commands
-        run: |
-          echo "=== Basic Commands ==="
-          git --version
-          docker --version || echo "Docker not available"
-          kubectl version --client || echo "kubectl not available"
-          
-      - name: Success message
-        run: |
-          echo "✅ Runner ${{ github.event.inputs.scale_set }} is working correctly!"
-          echo "Scale set: ${{ github.event.inputs.scale_set }}"
+          echo "�� Job đang chạy trên đúng scale set: ${{ github.event.inputs.required_scale_set }}"
           echo "Runner: ${{ runner.name }}"
+          date
+          
+      - name: Fail if wrong scale set
+        if: steps.validate.outputs.scale_set_valid == 'false'
+        run: |
+          echo "💥 JOB THẤT BẠI: Không thể chạy trên scale set yêu cầu!"
+          echo "Scale set yêu cầu: ${{ github.event.inputs.required_scale_set }}"
+          echo "Scale set thực tế: ${{ runner.name }}"
+          exit 1
