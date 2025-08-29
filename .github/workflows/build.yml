@@ -5,7 +5,7 @@ on:
 
 jobs:
   test:
-    runs-on: [self-hosted]
+    runs-on: cake-github-runner
     steps:
       - name: Print hello
         run: echo "Hello from self-hosted runner"
