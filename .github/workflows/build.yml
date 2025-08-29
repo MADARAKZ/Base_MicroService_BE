@@ -1,59 +1,15 @@
-name: Strict Scale Set Test
+name: Test Self-hosted Runner
 
 on:
   workflow_dispatch:
-    inputs:
-      required_scale_set:
-        description: 'Bắt buộc chạy trên scale set này test'
-        required: true
-        type: string
-        default: 'cake-github-runner'
 
 jobs:
-  validate-and-run:
-    runs-on: cake-github-runner
-    
+  test:
+    runs-on: [self-hosted]
     steps:
-      - name: Validate runner scale set
-        id: validate
+      - name: Print hello
+        run: echo "Hello from self-hosted runner"
+      - name: Show runner info
         run: |
-          REQUIRED_SCALE_SET="${{ github.event.inputs.required_scale_set }}"
-          ACTUAL_RUNNER_NAME="${{ runner.name }}"
-          
-          echo "Required scale set: $REQUIRED_SCALE_SET"
-          echo "Actual runner name: $ACTUAL_RUNNER_NAME"
-          
-          # Kiểm tra runner có đúng scale set không
-          if [[ "$ACTUAL_RUNNER_NAME" == *"$REQUIRED_SCALE_SET"* ]]; then
-            echo "✅ Runner đúng scale set: $REQUIRED_SCALE_SET"
-            echo "scale_set_valid=true" >> $GITHUB_OUTPUT
-          else
-            echo "❌ Runner SAI scale set!"
-            echo "Expected: $REQUIRED_SCALE_SET"
-            echo "Actual: $ACTUAL_RUNNER_NAME"
-            echo "scale_set_valid=false" >> $GITHUB_OUTPUT
-            exit 1
-          fi
-          
-      - name: Check runner labels
-        if: steps.validate.outputs.scale_set_valid == 'true'
-        run: |
-          echo "=== Runner Labels ==="
-          echo "Runner name: ${{ runner.name }}"
-          echo "Runner OS: ${{ runner.os }}"
-          echo "Runner arch: ${{ runner.arch }}"
-          
-      - name: Run actual job
-        if: steps.validate.outputs.scale_set_valid == 'true'
-        run: |
-          echo "�� Job đang chạy trên đúng scale set: ${{ github.event.inputs.required_scale_set }}"
-          echo "Runner: ${{ runner.name }}"
-          date
-          
-      - name: Fail if wrong scale set
-        if: steps.validate.outputs.scale_set_valid == 'false'
-        run: |
-          echo "💥 JOB THẤT BẠI: Không thể chạy trên scale set yêu cầu!"
-          echo "Scale set yêu cầu: ${{ github.event.inputs.required_scale_set }}"
-          echo "Scale set thực tế: ${{ runner.name }}"
-          exit 1
+          echo "Runner name: $RUNNER_NAME"
+          echo "Runner OS: $RUNNER_OS"
