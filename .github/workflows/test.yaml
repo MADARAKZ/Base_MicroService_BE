@@ -5,7 +5,7 @@ on:
 
 jobs:
   test:
-    runs-on: [self-hosted]
+    runs-on: runner-scale-set-cp
     steps:
       - name: Print hello
         run: echo "Hello from self-hosted runner"
