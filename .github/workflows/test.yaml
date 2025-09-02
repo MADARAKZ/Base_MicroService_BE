@@ -1,15 +1,9 @@
-name: Test Self-hosted Runner
-
+name: Actions Runner Controller Demo
 on:
   workflow_dispatch:
 
 jobs:
-  test:
+  Explore-GitHub-Actions:
     runs-on: runner-scale-set-cp
     steps:
-      - name: Print hello
-        run: echo "Hello from self-hosted runner"
-      - name: Show runner info
-        run: |
-          echo "Runner name: $RUNNER_NAME"
-          echo "Runner OS: $RUNNER_OS"
+      - run: echo "🎉 This job uses runner scale set runners!"
