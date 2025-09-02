@@ -5,7 +5,7 @@ on:
 
 jobs:
   test:
-    runs-on: cake-github-runner
+    runs-on: runner-scale-set-cp
     steps:
       - name: Print hello
         run: echo "Hello from self-hosted runner"
