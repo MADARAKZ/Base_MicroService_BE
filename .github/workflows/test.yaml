@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 jobs:
   test:
-    runs-on: control-plane-runner
+    runs-on: runner-scale-set-cp
     steps:
       - uses: actions/checkout@v5
       - name: Setup Go
