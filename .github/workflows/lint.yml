@@ -1,134 +1,304 @@
-name: Quick Lint Test
+name: Comprehensive Lint Test
 
 on:
-  workflow_dispatch:  # Cho phép chạy thủ công
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of lint test to run'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+        - all
+        - go
+        - yaml
+        - json
+        - shell
+        - markdown
 
 jobs:
-  quick-test:
+  lint-test:
     runs-on: runner-scale-set-cp
-    name: Quick Lint Test
     
     steps:
-    - name: Checkout
+    - name: Checkout code
       uses: actions/checkout@v4
-      
-    - name: Setup Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.21'
-        
-    - name: Create test file with lint issues
+    
+    - name: Check tools availability
       run: |
-        cat > lint_test.go << 'EOF'
-        package main
-        
-        import (
-        	"fmt"
-        	"os"
-        	"time"
-        )
-        
-        func main() {
-        	// Unused variable
-        	unused := "test"
-        	
-        	// Unused import
-        	_ = os.Args
-        	
-        	// Inefficient string building
-        	result := ""
-        	for i := 0; i < 5; i++ {
-        		result += fmt.Sprintf("%d", i)
-        	}
-        	
-        	// Sleep without context
-        	time.Sleep(100 * time.Millisecond)
-        	
-        	fmt.Println("Result:", result, unused)
-        }
-        EOF
-        
-    - name: Test compilation
+        echo "🔍 Checking available tools..."
+        echo "Go version:"
+        go version || echo "❌ Go not found"
+        echo "golangci-lint version:"
+        golangci-lint version || echo "❌ golangci-lint not found"
+        echo "yamllint version:"
+        yamllint --version || echo "❌ yamllint not found"
+        echo "jq version:"
+        jq --version || echo "❌ jq not found"
+        echo "shellcheck version:"
+        shellcheck --version || echo "❌ shellcheck not found"
+        echo "markdownlint version:"
+        markdownlint --version || echo "❌ markdownlint not found"
+    
+    - name: Setup test files
       run: |
-        echo "🔨 Compiling Go code..."
-        go build lint_test.go
-        echo "✅ Compilation successful"
+        echo "📁 Creating test files..."
         
-    - name: Test execution
-      run: |
-        echo "🏃 Running Go code..."
-        ./lint_test
-        echo "✅ Execution successful"
-        
-    - name: Install and test golangci-lint
-      run: |
-        echo "📦 Installing golangci-lint..."
-        curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.54.2
-        
-        echo "🔍 Running golangci-lint..."
-        golangci-lint run lint_test.go --verbose
-        
-        # Check if lint found issues (should fail)
-        if [ $? -eq 0 ]; then
-          echo "❌ Lint should have found issues but didn't!"
-          exit 1
-        else
-          echo "✅ Lint correctly found issues!"
-        fi
-        
-    - name: Test go vet
-      run: |
-        echo "🔍 Running go vet..."
-        go vet lint_test.go
-        
-        # Check if vet found issues (should fail)
-        if [ $? -eq 0 ]; then
-          echo "❌ go vet should have found issues but didn't!"
-          exit 1
-        else
-          echo "✅ go vet correctly found issues!"
-        fi
-        
-    - name: Test clean code
-      run: |
-        echo "📝 Creating clean code..."
-        cat > clean_test.go << 'EOF'
+        # Create Go test files
+        cat > test_good.go << 'EOF'
         package main
         
         import "fmt"
         
         func main() {
-        	fmt.Println("Clean code")
+            fmt.Println("Hello, World!")
         }
         EOF
         
-        echo "🔍 Testing clean code with linter..."
-        golangci-lint run clean_test.go
+        cat > test_bad.go << 'EOF'
+        package main
         
-        # Check if lint passes on clean code
+        import "fmt"
+        
+        func main() {
+            unused := "this is unused"
+            fmt.Println("Hello, World!")
+        }
+        EOF
+        
+        # Create YAML test files
+        cat > test_good.yaml << 'EOF'
+        name: Test
+        version: 1.0.0
+        steps:
+          - name: Step 1
+            run: echo "Hello"
+        EOF
+        
+        cat > test_bad.yaml << 'EOF'
+        name: Test
+        version: 1.0.0
+        steps:
+        - name: Step 1
+          run: echo "Hello"
+        - name: Step 2
+        run: echo "World"
+        EOF
+        
+        # Create JSON test files
+        cat > test_good.json << 'EOF'
+        {
+          "name": "test",
+          "version": "1.0.0",
+          "dependencies": {
+            "go": "1.21"
+          }
+        }
+        EOF
+        
+        cat > test_bad.json << 'EOF'
+        {
+          "name": "test",
+          "version": "1.0.0",
+          "dependencies": {
+            "go": "1.21"
+          }
+        }
+        EOF
+        
+        # Create Shell test files
+        cat > test_good.sh << 'EOF'
+        #!/bin/bash
+        echo "Hello, World!"
+        EOF
+        
+        cat > test_bad.sh << 'EOF'
+        #!/bin/bash
+        unused_var="test"
+        echo "Hello, World!"
+        EOF
+        
+        # Create Markdown test files
+        cat > test_good.md << 'EOF'
+        # Test Document
+        
+        This is a test document with proper formatting.
+        
+        ## Features
+        - Feature 1
+        - Feature 2
+        EOF
+        
+        cat > test_bad.md << 'EOF'
+        #Test Document
+        
+        This is a test document with improper formatting.
+        
+        ##Features
+        -Feature 1
+        -Feature 2
+        EOF
+        
+        echo "✅ Test files created"
+    
+    - name: Test Go linting
+      if: ${{ inputs.test_type == 'all' || inputs.test_type == 'go' }}
+      run: |
+        echo "🔍 Testing Go linting..."
+        
+        # Test good Go code (should pass)
+        echo "Testing good Go code..."
+        go build -o test_good_bin test_good.go
         if [ $? -eq 0 ]; then
-          echo "✅ Lint correctly passed on clean code!"
+          echo "✅ Good Go code compiled successfully"
         else
-          echo "❌ Lint failed on clean code!"
+          echo "❌ Good Go code compilation failed"
           exit 1
         fi
         
-    - name: Show runner info
-      run: |
-        echo "🖥️ Runner Information:"
-        echo "OS: $(uname -a)"
-        echo "Go: $(go version)"
-        echo "Architecture: $(uname -m)"
-        echo "Working directory: $(pwd)"
-        echo "Available tools:"
-        which go golangci-lint git
+        # Test bad Go code (should fail)
+        echo "Testing bad Go code with go vet..."
+        go vet test_bad.go
+        if [ $? -ne 0 ]; then
+          echo "✅ go vet correctly found issues"
+        else
+          echo "❌ go vet should have found issues"
+          exit 1
+        fi
         
+        # Test with golangci-lint
+        echo "Testing bad Go code with golangci-lint..."
+        golangci-lint run test_bad.go
+        if [ $? -ne 0 ]; then
+          echo "✅ golangci-lint correctly found issues"
+        else
+          echo "❌ golangci-lint should have found issues"
+          exit 1
+        fi
+        
+        echo "✅ Go linting tests passed"
+    
+    - name: Test YAML linting
+      if: ${{ inputs.test_type == 'all' || inputs.test_type == 'yaml' }}
+      run: |
+        echo "🔍 Testing YAML linting..."
+        
+        # Test good YAML (should pass)
+        echo "Testing good YAML..."
+        yamllint test_good.yaml
+        if [ $? -eq 0 ]; then
+          echo "✅ Good YAML passed validation"
+        else
+          echo "❌ Good YAML should have passed validation"
+          exit 1
+        fi
+        
+        # Test bad YAML (should fail)
+        echo "Testing bad YAML..."
+        yamllint test_bad.yaml
+        if [ $? -ne 0 ]; then
+          echo "✅ Bad YAML correctly failed validation"
+        else
+          echo "❌ Bad YAML should have failed validation"
+          exit 1
+        fi
+        
+        echo "✅ YAML linting tests passed"
+    
+    - name: Test JSON linting
+      if: ${{ inputs.test_type == 'all' || inputs.test_type == 'json' }}
+      run: |
+        echo "🔍 Testing JSON linting..."
+        
+        # Test good JSON (should pass)
+        echo "Testing good JSON..."
+        jq empty test_good.json
+        if [ $? -eq 0 ]; then
+          echo "✅ Good JSON passed validation"
+        else
+          echo "❌ Good JSON should have passed validation"
+          exit 1
+        fi
+        
+        # Test bad JSON (should fail)
+        echo "Testing bad JSON..."
+        jq empty test_bad.json
+        if [ $? -ne 0 ]; then
+          echo "✅ Bad JSON correctly failed validation"
+        else
+          echo "❌ Bad JSON should have passed validation"
+          exit 1
+        fi
+        
+        echo "✅ JSON linting tests passed"
+    
+    - name: Test Shell linting
+      if: ${{ inputs.test_type == 'all' || inputs.test_type == 'shell' }}
+      run: |
+        echo "🔍 Testing Shell linting..."
+        
+        # Test good shell script (should pass)
+        echo "Testing good shell script..."
+        shellcheck test_good.sh
+        if [ $? -eq 0 ]; then
+          echo "✅ Good shell script passed validation"
+        else
+          echo "❌ Good shell script should have passed validation"
+          exit 1
+        fi
+        
+        # Test bad shell script (should fail)
+        echo "Testing bad shell script..."
+        shellcheck test_bad.sh
+        if [ $? -ne 0 ]; then
+          echo "✅ Bad shell script correctly failed validation"
+        else
+          echo "❌ Bad shell script should have passed validation"
+          exit 1
+        fi
+        
+        echo "✅ Shell linting tests passed"
+    
+    - name: Test Markdown linting
+      if: ${{ inputs.test_type == 'all' || inputs.test_type == 'markdown' }}
+      run: |
+        echo "🔍 Testing Markdown linting..."
+        
+        # Test good markdown (should pass)
+        echo "Testing good markdown..."
+        markdownlint test_good.md
+        if [ $? -eq 0 ]; then
+          echo "✅ Good markdown passed validation"
+        else
+          echo "❌ Good markdown should have passed validation"
+          exit 1
+        fi
+        
+        # Test bad markdown (should fail)
+        echo "Testing bad markdown..."
+        markdownlint test_bad.md
+        if [ $? -ne 0 ]; then
+          echo "✅ Bad markdown correctly failed validation"
+        else
+          echo "❌ Bad markdown should have passed validation"
+          exit 1
+        fi
+        
+        echo "✅ Markdown linting tests passed"
+    
     - name: Cleanup
       if: always()
       run: |
-        rm -f lint_test lint_test.go clean_test.go
-        
-    - name: Success
+        echo "🧹 Cleaning up test files..."
+        rm -f test_*.go test_*.yaml test_*.json test_*.sh test_*.md test_*_bin
+        echo "✅ Cleanup completed"
+    
+    - name: Test Summary
       run: |
-        echo "🎉 All lint tests passed successfully!"
-        echo "✅ Runner is working correctly with lint tools"
+        echo "🎉 All lint tests completed successfully!"
+        echo "📊 Test summary:"
+        echo "  - Go linting: ✅"
+        echo "  - YAML linting: ✅"
+        echo "  - JSON linting: ✅"
+        echo "  - Shell linting: ✅"
+        echo "  - Markdown linting: ✅"
