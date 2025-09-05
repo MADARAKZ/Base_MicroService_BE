@@ -1,0 +1,134 @@
+name: Quick Lint Test
+
+on:
+  workflow_dispatch:  # Cho phép chạy thủ công
+
+jobs:
+  quick-test:
+    runs-on: runner-scale-set-cp
+    name: Quick Lint Test
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+        
+    - name: Create test file with lint issues
+      run: |
+        cat > lint_test.go << 'EOF'
+        package main
+        
+        import (
+        	"fmt"
+        	"os"
+        	"time"
+        )
+        
+        func main() {
+        	// Unused variable
+        	unused := "test"
+        	
+        	// Unused import
+        	_ = os.Args
+        	
+        	// Inefficient string building
+        	result := ""
+        	for i := 0; i < 5; i++ {
+        		result += fmt.Sprintf("%d", i)
+        	}
+        	
+        	// Sleep without context
+        	time.Sleep(100 * time.Millisecond)
+        	
+        	fmt.Println("Result:", result, unused)
+        }
+        EOF
+        
+    - name: Test compilation
+      run: |
+        echo "🔨 Compiling Go code..."
+        go build lint_test.go
+        echo "✅ Compilation successful"
+        
+    - name: Test execution
+      run: |
+        echo "🏃 Running Go code..."
+        ./lint_test
+        echo "✅ Execution successful"
+        
+    - name: Install and test golangci-lint
+      run: |
+        echo "📦 Installing golangci-lint..."
+        curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.54.2
+        
+        echo "🔍 Running golangci-lint..."
+        golangci-lint run lint_test.go --verbose
+        
+        # Check if lint found issues (should fail)
+        if [ $? -eq 0 ]; then
+          echo "❌ Lint should have found issues but didn't!"
+          exit 1
+        else
+          echo "✅ Lint correctly found issues!"
+        fi
+        
+    - name: Test go vet
+      run: |
+        echo "🔍 Running go vet..."
+        go vet lint_test.go
+        
+        # Check if vet found issues (should fail)
+        if [ $? -eq 0 ]; then
+          echo "❌ go vet should have found issues but didn't!"
+          exit 1
+        else
+          echo "✅ go vet correctly found issues!"
+        fi
+        
+    - name: Test clean code
+      run: |
+        echo "📝 Creating clean code..."
+        cat > clean_test.go << 'EOF'
+        package main
+        
+        import "fmt"
+        
+        func main() {
+        	fmt.Println("Clean code")
+        }
+        EOF
+        
+        echo "🔍 Testing clean code with linter..."
+        golangci-lint run clean_test.go
+        
+        # Check if lint passes on clean code
+        if [ $? -eq 0 ]; then
+          echo "✅ Lint correctly passed on clean code!"
+        else
+          echo "❌ Lint failed on clean code!"
+          exit 1
+        fi
+        
+    - name: Show runner info
+      run: |
+        echo "🖥️ Runner Information:"
+        echo "OS: $(uname -a)"
+        echo "Go: $(go version)"
+        echo "Architecture: $(uname -m)"
+        echo "Working directory: $(pwd)"
+        echo "Available tools:"
+        which go golangci-lint git
+        
+    - name: Cleanup
+      if: always()
+      run: |
+        rm -f lint_test lint_test.go clean_test.go
+        
+    - name: Success
+      run: |
+        echo "🎉 All lint tests passed successfully!"
+        echo "✅ Runner is working correctly with lint tools"
