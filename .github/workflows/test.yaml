@@ -1,10 +1,18 @@
-name: Actions Runner Controller Demo
-on:
-  workflow_dispatch:
+name: 'simple-test-lint'
 
+on:
+  push:
+    branches:
+      - 'main'
+      - 'test-workflow'
+  pull_request:
+    branches:
+      - 'main'
+      - 'test-workflow'
+  workflow_dispatch:
 jobs:
   test:
-    runs-on: runner-scale-set-cp
+    runs-on: control-plane-runner
     steps:
       - uses: actions/checkout@v5
       - name: Setup Go
@@ -17,4 +25,5 @@ jobs:
         run: go build -v ./...
       - name: Test with the Go CLI
         run: go test
+
 
